@@ -9,10 +9,43 @@
 name: searxng
 
 services:
+  searxng-config:
+    image: ghcr.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    restart: "no"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -eu
+        if [ ! -f /config/settings.yml ]; then
+          cp /usr/local/searxng/searx/settings.yml /config/settings.yml
+        fi
+        awk '
+          !done && $$0 == "  formats:" {
+            print
+            print "    - html"
+            print "    - csv"
+            print "    - json"
+            print "    - rss"
+            done = 1
+            skip = 1
+            next
+          }
+          skip && $$0 ~ /^    - / { next }
+          { skip = 0; print }
+        ' /config/settings.yml > /config/settings.yml.tmp
+        mv /config/settings.yml.tmp /config/settings.yml
+    volumes:
+      - searxng-config:/config
+    networks:
+      - coolify
+
   searxng:
     image: ghcr.io/searxng/searxng:${SEARXNG_VERSION:-latest}
     restart: unless-stopped
     depends_on:
+      searxng-config:
+        condition: service_completed_successfully
       valkey:
         condition: service_started
     expose:
