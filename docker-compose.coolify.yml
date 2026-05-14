@@ -10,7 +10,7 @@ name: searxng
 
 services:
   searxng:
-    image: docker.io/searxng/searxng:${SEARXNG_VERSION:-latest}
+    image: ghcr.io/searxng/searxng:${SEARXNG_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       valkey:
@@ -37,7 +37,7 @@ services:
       start_period: 30s
 
   valkey:
-    image: docker.io/valkey/valkey:9-alpine
+    image: ghcr.io/valkey-io/valkey:9-alpine
     command: valkey-server --save 30 1 --loglevel warning
     restart: unless-stopped
     expose:
