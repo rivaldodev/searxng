@@ -20,6 +20,9 @@ services:
         if [ ! -f /config/settings.yml ]; then
           cp /usr/local/searxng/searx/settings.yml /config/settings.yml
         fi
+        if [ ! -f /config/limiter.toml ]; then
+          cp /usr/local/searxng/searx/limiter.toml /config/limiter.toml
+        fi
         awk '
           !done && $$0 == "  formats:" {
             print
@@ -35,6 +38,25 @@ services:
           { skip = 0; print }
         ' /config/settings.yml > /config/settings.yml.tmp
         mv /config/settings.yml.tmp /config/settings.yml
+        awk '
+          !done && $$0 == "trusted_proxies = [" {
+            print
+            print "  '\''127.0.0.0/8'\'',"
+            print "  '\''::1'\'',"
+            print "  '\''10.0.0.0/8'\'',"
+            print "  '\''172.16.0.0/12'\'',"
+            print "  '\''192.168.0.0/16'\'',"
+            print "  '\''fd00::/8'\'',"
+            print "]"
+            done = 1
+            skip = 1
+            next
+          }
+          skip && $$0 != "]" { next }
+          skip && $$0 == "]" { skip = 0; next }
+          { print }
+        ' /config/limiter.toml > /config/limiter.toml.tmp
+        mv /config/limiter.toml.tmp /config/limiter.toml
     volumes:
       - searxng-config:/config
     networks:
